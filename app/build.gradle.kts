@@ -8,12 +8,16 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 android {
-    namespace = "com.example.wtmdappthatdoesntsuck"
+    namespace = "com.texasdex.wtmdappthatdoesntsuck"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.wtmdappthatdoesntsuck"
+        applicationId = "com.texasdex.wtmdappthatdoesntsuck"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -58,6 +62,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
 
     implementation(libs.retrofit)
