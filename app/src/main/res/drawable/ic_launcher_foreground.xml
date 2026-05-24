@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Antenna (Placed first to be behind the body) -->
+    <path
+        android:strokeColor="#000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M20,35 L70,19" />
+    <!-- Antenna Tip Bump -->
+    <path
+        android:fillColor="#000"
+        android:pathData="M70,16 a3,3 0 1,1 0,6 a3,3 0 1,1 0,-6 z" />
+    <!-- Radio Body -->
+    <path
+        android:fillColor="#02383b"
+        android:pathData="M20,35 h68 v45 h-68 z" />
+    <!-- Speaker Grill -->
+    <path
+        android:fillColor="#333"
+        android:pathData="M25,40 h15 v35 h-15 z" />
+    <!-- Dial Lines -->
+    <path
+        android:fillColor="#FFF"
+        android:pathData="M45,45 h35 v5 h-35 z M45,55 h35 v5 h-35 z M45,65 h35 v5 h-35 z" />
+    <!-- No Location Symbol (The Cheeky Part) -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M80,27 a8,8 0 1,0 0,16 a8,8 0 1,0 0,-16 z M80,31 l2,2 l-2,2 l-2,-2 z" />
+</vector>
