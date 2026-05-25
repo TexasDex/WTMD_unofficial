@@ -18,12 +18,17 @@ class RecentSongsViewModel(private val repository: SongRepository) : ViewModel()
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private var lastActivityTime = System.currentTimeMillis()
+
     init {
-        loadRecentSongs()
+        loadRecentSongs(isUserInitiated = true)
         startAutoRefresh()
     }
 
-    fun loadRecentSongs() {
+    fun loadRecentSongs(isUserInitiated: Boolean = false) {
+        if (isUserInitiated) {
+            lastActivityTime = System.currentTimeMillis()
+        }
         viewModelScope.launch {
             _isLoading.value = true
             try {
@@ -40,6 +45,10 @@ class RecentSongsViewModel(private val repository: SongRepository) : ViewModel()
         viewModelScope.launch {
             while (true) {
                 delay(60000)
+                // Stop refreshing if inactive for more than 1 hour (3,600,000 ms)
+                if (System.currentTimeMillis() - lastActivityTime > 3600000) {
+                    continue
+                }
                 try {
                     _songs.value = repository.getRecentSongs()
                 } catch (e: Exception) {
@@ -50,10 +59,11 @@ class RecentSongsViewModel(private val repository: SongRepository) : ViewModel()
     }
 
     fun toggleLike(song: Song) {
+        lastActivityTime = System.currentTimeMillis()
         viewModelScope.launch {
             repository.toggleLike(song)
             // Refresh to update isLiked state
-            loadRecentSongs()
+            loadRecentSongs(isUserInitiated = false)
         }
     }
 
