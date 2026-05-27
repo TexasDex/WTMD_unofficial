@@ -18,6 +18,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.texasdex.wtmdappthatdoesntsuck.WTMDApplication
@@ -39,7 +42,21 @@ fun RecentSongsScreen(
 
     val songs by viewModel.songs.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isIdle by viewModel.isIdle.collectAsState()
     val preferredService by repository.preferredServiceFlow.collectAsState(initial = repository.getPreferredService())
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.loadRecentSongs(isUserInitiated = true)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -66,24 +83,38 @@ fun RecentSongsScreen(
                 .padding(padding)
                 .fillMaxSize()
         ) {
-            if (songs.isEmpty() && isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+            Column(modifier = Modifier.fillMaxSize()) {
+                if (isIdle) {
+                    Text(
+                        text = "Not auto-fetching due to inactivity, refresh to start",
+                        color = Color.Red,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
                 }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(songs) { song ->
-                        SongItemRow(
-                            song = song,
-                            onLikeClick = { viewModel.toggleLike(song) },
-                            onArtClick = {
-                                if (preferredService == "NOT_SET") {
-                                    onNavigateToSettings("music")
-                                } else if (preferredService != "None") {
-                                    MusicServiceHelper.openSongInService(context, song, preferredService)
+
+                if (songs.isEmpty() && isLoading) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(songs) { song ->
+                            SongItemRow(
+                                song = song,
+                                onLikeClick = { viewModel.toggleLike(song) },
+                                onArtClick = {
+                                    if (preferredService == "NOT_SET") {
+                                        onNavigateToSettings("music")
+                                    } else if (preferredService != "None") {
+                                        MusicServiceHelper.openSongInService(context, song, preferredService)
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
