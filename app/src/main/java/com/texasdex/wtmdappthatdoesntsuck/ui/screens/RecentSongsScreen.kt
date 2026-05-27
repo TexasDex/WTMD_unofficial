@@ -129,7 +129,12 @@ fun RecentSongsScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SongItemRow(song: Song, onLikeClick: () -> Unit, onArtClick: () -> Unit) {
+fun SongItemRow(
+    song: Song,
+    onLikeClick: () -> Unit,
+    onArtClick: () -> Unit,
+    showCount: Boolean = false
+) {
     var showUnlikeReminder by remember { mutableStateOf(false) }
 
     LaunchedEffect(showUnlikeReminder) {
@@ -168,39 +173,49 @@ fun SongItemRow(song: Song, onLikeClick: () -> Unit, onArtClick: () -> Unit) {
                 Text(song.artist, style = MaterialTheme.typography.bodyMedium)
                 Text(song.timestamp, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .combinedClickable(
-                            onClick = {
-                                if (song.isLiked) {
-                                    showUnlikeReminder = true
-                                } else {
-                                    onLikeClick()
-                                }
-                            },
-                            onLongClick = {
-                                if (song.isLiked) {
-                                    onLikeClick()
-                                }
-                            }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (song.isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = if (song.isLiked) "Hold to unlike" else "Like",
-                        tint = if (song.isLiked) Color.Red else Color.Gray
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (showCount && song.likeCount > 1) {
+                    Text(
+                        text = song.likeCount.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(end = 4.dp)
                     )
                 }
-                if (showUnlikeReminder) {
-                    Text(
-                        text = "Hold to unlike",
-                        color = Color.Red,
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .combinedClickable(
+                                onClick = {
+                                    if (song.isLiked) {
+                                        showUnlikeReminder = true
+                                    } else {
+                                        onLikeClick()
+                                    }
+                                },
+                                onLongClick = {
+                                    if (song.isLiked) {
+                                        onLikeClick()
+                                    }
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (song.isLiked || song.isLikedBefore) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (song.isLiked) "Hold to unlike" else "Like",
+                            tint = if (song.isLiked) Color.Red else if (song.isLikedBefore) Color(0xFFFFC0CB) else Color.Gray
+                        )
+                    }
+                    if (showUnlikeReminder) {
+                        Text(
+                            text = "Hold to unlike",
+                            color = Color.Red,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                 }
             }
         }

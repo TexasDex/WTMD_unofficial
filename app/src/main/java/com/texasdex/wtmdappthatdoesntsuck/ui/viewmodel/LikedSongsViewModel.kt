@@ -49,6 +49,7 @@ class LikedSongsViewModel(private val repository: SongRepository) : ViewModel() 
                 SortOrder.ARTIST -> filtered.sortedBy { it.artist }
                 SortOrder.TITLE -> filtered.sortedBy { it.title }
                 SortOrder.RECENT -> filtered.reversed()
+                SortOrder.MOST_LIKED -> filtered.sortedByDescending { it.likeCount }
             }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -67,11 +68,11 @@ class LikedSongsViewModel(private val repository: SongRepository) : ViewModel() 
 
     fun removeLike(song: Song) {
         viewModelScope.launch {
-            repository.toggleLike(song)
+            repository.removeAllLikes(song.id)
         }
     }
 
-    enum class SortOrder { ARTIST, TITLE, RECENT }
+    enum class SortOrder { ARTIST, TITLE, RECENT, MOST_LIKED }
 
     class Factory(private val repository: SongRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

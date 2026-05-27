@@ -116,6 +116,11 @@ fun LikedSongsScreen(
                     onClick = { viewModel.setSortOrder(LikedSongsViewModel.SortOrder.RECENT) },
                     label = { Text("Recent") }
                 )
+                FilterChip(
+                    selected = sortOrder == LikedSongsViewModel.SortOrder.MOST_LIKED,
+                    onClick = { viewModel.setSortOrder(LikedSongsViewModel.SortOrder.MOST_LIKED) },
+                    label = { Text("Most Liked") }
+                )
             }
 
             if (availableYears.isNotEmpty()) {
@@ -153,7 +158,8 @@ fun LikedSongsScreen(
                             } else if (preferredService != "None") {
                                 MusicServiceHelper.openSongInService(context, song, preferredService)
                             }
-                        }
+                        },
+                        showCount = true
                     )
                 }
             }

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SongDao {
-    @Query("SELECT * FROM liked_songs")
+    @Query("SELECT * FROM liked_songs ORDER BY id DESC")
     fun getAllLikedSongs(): Flow<List<SongEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -14,9 +14,21 @@ interface SongDao {
     @Delete
     suspend fun deleteSong(song: SongEntity)
 
-    @Query("SELECT EXISTS(SELECT 1 FROM liked_songs WHERE songId = :songId)")
-    suspend fun isLiked(songId: String): Boolean
+    @Query("DELETE FROM liked_songs WHERE songId = :songId AND timestamp = :timestamp")
+    suspend fun deleteSpecificLike(songId: String, timestamp: String)
 
-    @Query("SELECT * FROM liked_songs WHERE songId = :songId")
+    @Query("DELETE FROM liked_songs WHERE songId = :songId")
+    suspend fun deleteAllLikesForSong(songId: String)
+
+    @Query("SELECT COUNT(*) FROM liked_songs WHERE songId = :songId")
+    suspend fun getLikeCount(songId: String): Int
+
+    @Query("SELECT EXISTS(SELECT 1 FROM liked_songs WHERE songId = :songId AND timestamp = :timestamp)")
+    suspend fun isLikedSpecific(songId: String, timestamp: String): Boolean
+
+    @Query("SELECT EXISTS(SELECT 1 FROM liked_songs WHERE songId = :songId)")
+    suspend fun isLikedEver(songId: String): Boolean
+
+    @Query("SELECT * FROM liked_songs WHERE songId = :songId LIMIT 1")
     suspend fun getSongById(songId: String): SongEntity?
 }

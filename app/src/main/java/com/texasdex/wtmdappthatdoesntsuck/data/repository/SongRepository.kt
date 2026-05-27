@@ -38,46 +38,59 @@ class SongRepository(
         val url = preferenceManager.getApiUrl()
         val response = apiService.getRecentSongs(url)
         response.items.map { item ->
-            val likedSong = songDao.getSongById(item.songId)
+            val cleanTimestamp = item.timestamp.replace(" (et)", "")
+            val isLikedSpecific = songDao.isLikedSpecific(item.songId, cleanTimestamp)
+            val isLikedEver = songDao.isLikedEver(item.songId)
+            val count = songDao.getLikeCount(item.songId)
+            val existing = songDao.getSongById(item.songId)
+            
             Song(
                 id = item.songId,
                 title = item.title,
                 artist = item.artist,
-                timestamp = item.timestamp.replace(" (et)", ""),
+                timestamp = cleanTimestamp,
                 coverArt = item.coverArt?.replace("http://", "https://"),
-                isLiked = likedSong != null,
-                localCoverArtPath = likedSong?.localCoverArtPath
+                isLiked = isLikedSpecific,
+                isLikedBefore = isLikedEver && !isLikedSpecific,
+                likeCount = count,
+                localCoverArtPath = existing?.localCoverArtPath
             )
         }
     }
 
     fun getLikedSongs(): Flow<List<Song>> {
         return songDao.getAllLikedSongs().map { entities ->
-            entities.map { entity ->
+            entities.groupBy { it.songId }.map { (songId, instances) ->
+                val first = instances.first()
                 Song(
-                    id = entity.songId,
-                    title = entity.title,
-                    artist = entity.artist,
-                    timestamp = entity.timestamp.replace(" (et)", ""),
-                    coverArt = entity.coverArt?.replace("http://", "https://"),
+                    id = songId,
+                    title = first.title,
+                    artist = first.artist,
+                    timestamp = first.timestamp,
+                    coverArt = first.coverArt?.replace("http://", "https://"),
                     isLiked = true,
-                    likedAtYear = entity.likedAtYear,
-                    localCoverArtPath = entity.localCoverArtPath
+                    likeCount = instances.size,
+                    likedAtYear = first.likedAtYear,
+                    localCoverArtPath = first.localCoverArtPath
                 )
             }
         }
     }
 
     suspend fun toggleLike(song: Song) = withContext(Dispatchers.IO) {
-        val existing = songDao.getSongById(song.id)
-        if (existing != null) {
-            existing.localCoverArtPath?.let { path ->
-                val file = File(path)
-                if (file.exists()) file.delete()
+        val isLikedSpecific = songDao.isLikedSpecific(song.id, song.timestamp)
+        if (isLikedSpecific) {
+            songDao.deleteSpecificLike(song.id, song.timestamp)
+            if (!songDao.isLikedEver(song.id)) {
+                val existing = songDao.getSongById(song.id)
+                existing?.localCoverArtPath?.let { path ->
+                    val file = File(path)
+                    if (file.exists()) file.delete()
+                }
             }
-            songDao.deleteSong(existing)
         } else {
-            val localPath = downloadAndSaveArt(song.id, song.coverArt)
+            val existing = songDao.getSongById(song.id)
+            val localPath = existing?.localCoverArtPath ?: downloadAndSaveArt(song.id, song.coverArt)
             songDao.insertSong(
                 SongEntity(
                     songId = song.id,
@@ -90,6 +103,15 @@ class SongRepository(
                 )
             )
         }
+    }
+
+    suspend fun removeAllLikes(songId: String) = withContext(Dispatchers.IO) {
+        val existing = songDao.getSongById(songId)
+        existing?.localCoverArtPath?.let { path ->
+            val file = File(path)
+            if (file.exists()) file.delete()
+        }
+        songDao.deleteAllLikesForSong(songId)
     }
 
     private suspend fun downloadAndSaveArt(songId: String, url: String?): String? = withContext(Dispatchers.IO) {
