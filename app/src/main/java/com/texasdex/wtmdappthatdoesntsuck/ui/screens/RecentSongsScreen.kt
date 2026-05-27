@@ -1,10 +1,13 @@
 package com.texasdex.wtmdappthatdoesntsuck.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -12,6 +15,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
@@ -27,6 +31,7 @@ import com.texasdex.wtmdappthatdoesntsuck.WTMDApplication
 import com.texasdex.wtmdappthatdoesntsuck.domain.model.Song
 import com.texasdex.wtmdappthatdoesntsuck.ui.utils.MusicServiceHelper
 import com.texasdex.wtmdappthatdoesntsuck.ui.viewmodel.RecentSongsViewModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,8 +127,18 @@ fun RecentSongsScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SongItemRow(song: Song, onLikeClick: () -> Unit, onArtClick: () -> Unit) {
+    var showUnlikeReminder by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showUnlikeReminder) {
+        if (showUnlikeReminder) {
+            delay(2000)
+            showUnlikeReminder = false
+        }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -153,12 +168,40 @@ fun SongItemRow(song: Song, onLikeClick: () -> Unit, onArtClick: () -> Unit) {
                 Text(song.artist, style = MaterialTheme.typography.bodyMedium)
                 Text(song.timestamp, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
-            IconButton(onClick = onLikeClick) {
-                Icon(
-                    imageVector = if (song.isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "Like",
-                    tint = if (song.isLiked) Color.Red else Color.Gray
-                )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .combinedClickable(
+                            onClick = {
+                                if (song.isLiked) {
+                                    showUnlikeReminder = true
+                                } else {
+                                    onLikeClick()
+                                }
+                            },
+                            onLongClick = {
+                                if (song.isLiked) {
+                                    onLikeClick()
+                                }
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (song.isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (song.isLiked) "Hold to unlike" else "Like",
+                        tint = if (song.isLiked) Color.Red else Color.Gray
+                    )
+                }
+                if (showUnlikeReminder) {
+                    Text(
+                        text = "Hold to unlike",
+                        color = Color.Red,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
             }
         }
     }

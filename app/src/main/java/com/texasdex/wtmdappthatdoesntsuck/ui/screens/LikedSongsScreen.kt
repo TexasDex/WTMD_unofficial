@@ -40,11 +40,8 @@ fun LikedSongsScreen(
     val query by viewModel.searchQuery.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     val selectedYear by viewModel.selectedYear.collectAsState()
+    val availableYears by viewModel.availableYears.collectAsState()
     val preferredService by repository.preferredServiceFlow.collectAsState(initial = repository.getPreferredService())
-
-    val availableYears = remember(songs) {
-        songs.mapNotNull { it.likedAtYear }.distinct().sortedDescending()
-    }
 
     Scaffold(
         topBar = {

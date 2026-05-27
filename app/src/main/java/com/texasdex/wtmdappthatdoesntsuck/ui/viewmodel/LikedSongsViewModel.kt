@@ -7,17 +7,33 @@ import com.texasdex.wtmdappthatdoesntsuck.data.repository.SongRepository
 import com.texasdex.wtmdappthatdoesntsuck.domain.model.Song
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class LikedSongsViewModel(private val repository: SongRepository) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
-    private val _sortOrder = MutableStateFlow(SortOrder.ARTIST)
+    private val _sortOrder = MutableStateFlow(SortOrder.RECENT)
     val sortOrder: StateFlow<SortOrder> = _sortOrder
 
     private val _selectedYear = MutableStateFlow<Int?>(null)
     val selectedYear: StateFlow<Int?> = _selectedYear
+
+    val availableYears: StateFlow<List<Int>> = repository.getLikedSongs()
+        .map { songs -> songs.mapNotNull { it.likedAtYear }.distinct().sortedDescending() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    init {
+        viewModelScope.launch {
+            repository.getLikedSongs().first().let { allSongs ->
+                val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+                if (allSongs.any { it.likedAtYear == currentYear }) {
+                    _selectedYear.value = currentYear
+                }
+            }
+        }
+    }
 
     val likedSongs: StateFlow<List<Song>> = combine(
         repository.getLikedSongs(),
