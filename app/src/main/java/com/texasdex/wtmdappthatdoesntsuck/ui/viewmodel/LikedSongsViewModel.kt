@@ -48,7 +48,7 @@ class LikedSongsViewModel(private val repository: SongRepository) : ViewModel() 
             when (sort) {
                 SortOrder.ARTIST -> filtered.sortedBy { it.artist }
                 SortOrder.TITLE -> filtered.sortedBy { it.title }
-                SortOrder.RECENT -> filtered.reversed()
+                SortOrder.RECENT -> filtered.sortedByDescending { it.addedAt }
                 SortOrder.MOST_LIKED -> filtered.sortedByDescending { it.likeCount }
             }
         }
@@ -68,7 +68,7 @@ class LikedSongsViewModel(private val repository: SongRepository) : ViewModel() 
 
     fun removeLike(song: Song) {
         viewModelScope.launch {
-            repository.removeAllLikes(song.id)
+            repository.removeAllLikes(song.artist, song.title)
         }
     }
 

@@ -12,5 +12,6 @@ data class SongEntity(
     val timestamp: String,
     val coverArt: String?,
     val likedAtYear: Int,
-    val localCoverArtPath: String? = null
+    val localCoverArtPath: String? = null,
+    val addedAt: Long = System.currentTimeMillis()
 )

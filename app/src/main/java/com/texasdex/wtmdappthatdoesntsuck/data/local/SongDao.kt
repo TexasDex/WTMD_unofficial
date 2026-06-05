@@ -17,17 +17,35 @@ interface SongDao {
     @Query("DELETE FROM liked_songs WHERE songId = :songId AND timestamp = :timestamp")
     suspend fun deleteSpecificLike(songId: String, timestamp: String)
 
+    @Query("DELETE FROM liked_songs WHERE artist = :artist AND title = :title AND timestamp = :timestamp")
+    suspend fun deleteSpecificLikeFuzzy(artist: String, title: String, timestamp: String)
+
     @Query("DELETE FROM liked_songs WHERE songId = :songId")
     suspend fun deleteAllLikesForSong(songId: String)
+
+    @Query("DELETE FROM liked_songs WHERE artist = :artist AND title = :title")
+    suspend fun deleteAllLikesForSongFuzzy(artist: String, title: String)
 
     @Query("SELECT COUNT(*) FROM liked_songs WHERE songId = :songId")
     suspend fun getLikeCount(songId: String): Int
 
+    @Query("SELECT COUNT(*) FROM liked_songs WHERE artist = :artist AND title = :title")
+    suspend fun getLikeCountFuzzy(artist: String, title: String): Int
+
     @Query("SELECT EXISTS(SELECT 1 FROM liked_songs WHERE songId = :songId AND timestamp = :timestamp)")
     suspend fun isLikedSpecific(songId: String, timestamp: String): Boolean
 
+    @Query("SELECT EXISTS(SELECT 1 FROM liked_songs WHERE artist = :artist AND title = :title AND timestamp = :timestamp)")
+    suspend fun isLikedFuzzy(artist: String, title: String, timestamp: String): Boolean
+
     @Query("SELECT EXISTS(SELECT 1 FROM liked_songs WHERE songId = :songId)")
     suspend fun isLikedEver(songId: String): Boolean
+
+    @Query("SELECT EXISTS(SELECT 1 FROM liked_songs WHERE artist = :artist AND title = :title)")
+    suspend fun isLikedEverFuzzy(artist: String, title: String): Boolean
+
+    @Query("SELECT * FROM liked_songs WHERE artist = :artist AND title = :title LIMIT 1")
+    suspend fun getSongByMetadata(artist: String, title: String): SongEntity?
 
     @Query("SELECT * FROM liked_songs WHERE songId = :songId LIMIT 1")
     suspend fun getSongById(songId: String): SongEntity?

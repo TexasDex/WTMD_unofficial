@@ -13,7 +13,11 @@ class WTMDApplication : Application() {
 
     private val database by lazy {
         Room.databaseBuilder(this, SongDatabase::class.java, "wtmd_database")
-            .addMigrations(SongDatabase.MIGRATION_3_4, SongDatabase.MIGRATION_4_5)
+            .addMigrations(
+                SongDatabase.MIGRATION_3_4,
+                SongDatabase.MIGRATION_4_5,
+                SongDatabase.MIGRATION_5_6
+            )
             .build()
     }
 

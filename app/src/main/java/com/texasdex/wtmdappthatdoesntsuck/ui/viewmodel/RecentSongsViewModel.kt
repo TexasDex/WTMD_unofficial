@@ -72,6 +72,16 @@ class RecentSongsViewModel(private val repository: SongRepository) : ViewModel()
         }
     }
 
+    fun addManualLike(artist: String, title: String) {
+        lastActivityTime = System.currentTimeMillis()
+        _isIdle.value = false
+        viewModelScope.launch {
+            repository.addManualLike(artist, title)
+            // Refresh to update states in case it matched a song on screen
+            loadRecentSongs(isUserInitiated = false)
+        }
+    }
+
     class Factory(private val repository: SongRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return RecentSongsViewModel(repository) as T

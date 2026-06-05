@@ -50,6 +50,8 @@ fun RecentSongsScreen(
     val isIdle by viewModel.isIdle.collectAsState()
     val preferredService by repository.preferredServiceFlow.collectAsState(initial = repository.getPreferredService())
 
+    var showManualAddDialog by remember { mutableStateOf(false) }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -63,11 +65,58 @@ fun RecentSongsScreen(
         }
     }
 
+    if (showManualAddDialog) {
+        var artist by remember { mutableStateOf("") }
+        var title by remember { mutableStateOf("") }
+        
+        AlertDialog(
+            onDismissRequest = { showManualAddDialog = false },
+            title = { Text("Add Song Manually") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = artist,
+                        onValueChange = { artist = it },
+                        label = { Text("Artist") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Title") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (artist.isNotBlank() && title.isNotBlank()) {
+                            viewModel.addManualLike(artist.trim(), title.trim())
+                            showManualAddDialog = false
+                        }
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showManualAddDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Recent Songs") },
                 actions = {
+                    IconButton(onClick = { showManualAddDialog = true }) {
+                        Icon(Icons.Default.EditNote, contentDescription = "Add song manually")
+                    }
                     IconButton(onClick = { viewModel.loadRecentSongs(isUserInitiated = true) }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }

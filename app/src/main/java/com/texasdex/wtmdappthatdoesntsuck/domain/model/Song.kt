@@ -10,5 +10,6 @@ data class Song(
     val isLikedBefore: Boolean = false,
     val likeCount: Int = 0,
     val likedAtYear: Int? = null,
-    val localCoverArtPath: String? = null
+    val localCoverArtPath: String? = null,
+    val addedAt: Long = 0
 )

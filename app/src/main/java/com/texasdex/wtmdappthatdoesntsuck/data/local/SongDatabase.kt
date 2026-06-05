@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [SongEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class SongDatabase : RoomDatabase() {
@@ -37,6 +37,14 @@ abstract class SongDatabase : RoomDatabase() {
                 
                 database.execSQL("DROP TABLE liked_songs")
                 database.execSQL("ALTER TABLE liked_songs_new RENAME TO liked_songs")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE liked_songs ADD COLUMN addedAt INTEGER NOT NULL DEFAULT 0")
+                // For existing records, use the auto-increment ID as a proxy for time if addedAt is 0
+                database.execSQL("UPDATE liked_songs SET addedAt = id WHERE addedAt = 0")
             }
         }
     }
