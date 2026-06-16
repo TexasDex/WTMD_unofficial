@@ -42,6 +42,20 @@ fun SettingsScreen(
     val preferredService by viewModel.preferredService.collectAsState()
     val buildDate = BuildConfig.BUILD_TIME
     val scrollState = rememberScrollState()
+    var pendingJsonToSave by remember { mutableStateOf<String?>(null) }
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        uri?.let {
+            pendingJsonToSave?.let { json ->
+                context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                    outputStream.write(json.toByteArray())
+                }
+                pendingJsonToSave = null
+            }
+        }
+    }
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -89,7 +103,8 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "Gordon is a Linux Sysadmin who has never written an Android app before, but hated the new WTMD app so much that he was inspired to write (i.e. vibecode) a replacement that actually makes song discovery easier and doesn't demand your location data every time it starts up. If it has bugs well, no big surprise, this whole thing was built in a few hours with Gemini, but at least it actually does what he wants.",
+                text = "Gordon is a Linux Sysadmin who has never written an Android app before, but hated the new WTMD app so much that he was inspired to make a replacement that actually makes song discovery easier and doesn't demand your location data every time it starts up. If it has bugs well, no big surprise, this whole thing was built in a few days with Gemini, but at least it actually does what he wants.\n" +
+                        "Standard disclaimer™: This app is completely unofficial and not affiliated with WTMD whatsoever, which is how you know it's good.",
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(Modifier.height(24.dp))
@@ -149,6 +164,7 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
             Text("Data Backup", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 Button(
                     onClick = {
@@ -161,19 +177,34 @@ fun SettingsScreen(
                                 putExtra(Intent.EXTRA_STREAM, uri)
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
-                            context.startActivity(Intent.createChooser(intent, "Save Backup"))
+                            context.startActivity(Intent.createChooser(intent, "Share Backup"))
                         }
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(4.dp)
                 ) {
-                    Text("Export Backup")
+                    Text("Share", fontSize = 12.sp)
                 }
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(4.dp))
                 Button(
-                    onClick = { importLauncher.launch("*/*") }, // Picking any file, filtering in code
-                    modifier = Modifier.weight(1f)
+                    onClick = {
+                        viewModel.exportBackup { json ->
+                            pendingJsonToSave = json
+                            createDocumentLauncher.launch("wtmd_backup_${System.currentTimeMillis()}.json")
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(4.dp)
                 ) {
-                    Text("Restore Backup")
+                    Text("Save to File", fontSize = 12.sp)
+                }
+                Spacer(Modifier.width(4.dp))
+                Button(
+                    onClick = { importLauncher.launch("*/*") },
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(4.dp)
+                ) {
+                    Text("Restore", fontSize = 12.sp)
                 }
             }
         }
